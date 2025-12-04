@@ -130,13 +130,19 @@ class Sequence:
         )
 
     def multiply_notes(self, times=None):
+        if self.notes[-1].is_term:
+            self.notes.pop()
         self.notes *= times or int(self.max_notes / len(self.notes))
+        self.notes.append(Note(b"\xff\xff\xff\xff"))
 
     def get_notes_left(self):
         actual_max_notes = self.max_notes - 2  # because of the closing 8 bytes
         if len(self.notes) > actual_max_notes:
             print("More notes than available space, truncating sequence!")
             self.notes = self.notes[:actual_max_notes]
+
+            # make sure that sequence is closed properly
+            self.notes[-1] = Note(b"\xff\xff\xff\xff")
             return 0
 
         return actual_max_notes - len(self.notes)
@@ -166,6 +172,6 @@ class Sequence:
                 note = Note(fp.read(4), position)
                 if note.is_step:
                     position += note.length
-                if note.is_empty:
-                    break
                 self.notes.append(note)
+                if note.is_term:
+                    break
