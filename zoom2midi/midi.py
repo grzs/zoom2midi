@@ -1,17 +1,17 @@
 from mido import Message, MidiFile, MidiTrack
-from .seq import Duration, Note, Sequence
+from zoom2midi.seq import Duration, Note, Sequence
 
 
 class ZoomMidiFile(MidiFile):
-    def __init__(self, note_offset=0, sequence=Sequence()):
+    def __init__(self, note_offset=0, sequence=None):
         super().__init__(type=0)  # single track MIDI file
         self.tick_duration_ratio = self.ticks_per_beat / Duration.QUARTER
         self.tracks.append(MidiTrack())
         self.tracks[-1].name = "ZOOM sequence"
         self.note_offset = note_offset
-        self.seq = sequence
+        self.seq = sequence if isinstance(sequence, Sequence) else Sequence()
 
-    def duration2ticks(self, duration: Duration):
+    def duration2ticks(self, duration: int):
         return int(duration * self.tick_duration_ratio)
 
     def ticks2duration(self, ticks: int):
@@ -23,7 +23,7 @@ class ZoomMidiFile(MidiFile):
 
         track = self.tracks[0]
         position = 0
-        for msg in seq.notes.to_messages(note_offset=self.note_offset):
+        for msg in seq.to_messages(note_offset=self.note_offset):
             msg["time"] = self.duration2ticks(msg["position"] - position)  # delta
             position = msg.pop("position")
             track.append(Message(**msg))

@@ -1,5 +1,5 @@
 import os
-from zoomrlib.seq import Sequence
+from zoom2midi.seq import Sequence
 
 DATADIR = os.path.abspath("./data")
 

@@ -110,7 +110,11 @@ class Sequence:
     def __init__(self, filename="SMPLSEQ.ZDT"):
         self.filename = filename
         self.notes = []
-        self.read_file()
+
+        try:
+            self.read_file()
+        except FileNotFoundError:
+            print("File not found, sequence is empty.")
 
     @classmethod
     def _get_total_size(cls):
@@ -182,7 +186,9 @@ class Sequence:
                     "position": note.end,
                 },
             ]
-        return messages.sort(key=lambda msg: msg["position"])
+
+        messages.sort(key=lambda msg: msg["position"])
+        return messages
 
     def write_file(self):
         notes_left = self.trim_and_close()

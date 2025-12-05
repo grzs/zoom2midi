@@ -1,4 +1,4 @@
-from zoomrlib.seq import Duration, Note, Sequence
+from zoom2midi.seq import Duration, Note, Sequence
 
 # bayan
 ghe = Note(length=Duration.QUARTER, channel=1)
