@@ -1,5 +1,5 @@
 import os
-from .seq import Duration, Note, Sequence
+from zoomrlib.seq import Sequence
 
 DATADIR = os.path.abspath("./data")
 

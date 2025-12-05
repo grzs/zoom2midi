@@ -129,26 +129,63 @@ class Sequence:
             )
         )
 
-    def multiply_notes(self, times=None):
-        if self.notes[-1].is_term:
-            self.notes.pop()
-        self.notes *= times or int(self.max_notes / len(self.notes))
-        self.notes.append(Note(b"\xff\xff\xff\xff"))
+    def _trim(self):
+        """Ensure that sequence is closed properly and doesn't contain extra notes."""
+        for i, note in enumerate(self.notes):
+            if note.is_term:
+                i += 1
+                break
+            elif note.is_empty:
+                break
 
-    def get_notes_left(self):
-        actual_max_notes = self.max_notes - 2  # because of the closing 8 bytes
+        if len(self.notes) > i:
+            self.notes = self.notes[:i]
+
+    def multiply_notes(self, times=None):
+        self._trim()
+        self.notes *= times or int(self.max_notes - 2 / len(self.notes))
+        self._close()
+
+    def trim_and_close(self):
+        self._trim()
+        return self._close()
+
+    def _close(self):
+        term = Note(b"\xff\xff\xff\xff")
+        actual_max_notes = self.max_notes - 2  # because of 8 bytes eof
         if len(self.notes) > actual_max_notes:
             print("More notes than available space, truncating sequence!")
             self.notes = self.notes[:actual_max_notes]
-
-            # make sure that sequence is closed properly
-            self.notes[-1] = Note(b"\xff\xff\xff\xff")
+            self.notes[-1] = term
             return 0
+
+        if not self.notes[-1].is_term:
+            self.notes.append(term)
 
         return actual_max_notes - len(self.notes)
 
+    def to_messages(self, note_offset=0):
+        messages = []
+        for note in self.notes:
+            if note.is_step:
+                continue
+
+            messages += [
+                {
+                    "type": "note_on",
+                    "note": note.channel + note_offset,
+                    "position": note.start,
+                },
+                {
+                    "type": "note_off",
+                    "note": note.channel + note_offset,
+                    "position": note.end,
+                },
+            ]
+        return messages.sort(key=lambda msg: msg["position"])
+
     def write_file(self):
-        notes_left = self.get_notes_left()
+        notes_left = self.trim_and_close()
         with open(self.filename, "wb") as fp:
             fp.seek(0)
             fp.write(self._header)
