@@ -163,9 +163,13 @@ class Sequence:
             self.notes.append(Note())
         elif len(self.notes) > i:
             self.notes = self.notes[:i]
+        if not self.notes[-1].is_term:
+            self.notes.append(Note(b"\xff\xff\xff\xff"))
 
     def multiply_notes(self, times=None):
         self._trim()
+        if not self.notes[-1].is_term:
+            self.notes.pop()
         self.notes *= times or int(self.max_notes - 2 / len(self.notes))
         self._close()
 

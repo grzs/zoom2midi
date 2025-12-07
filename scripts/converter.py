@@ -66,6 +66,7 @@ def main(mode):
 
     try:
         if mode == "zoom2midi":
+            mid.from_sequence()
             mid.save(args.midifile)
             print("MIDI file {:s} has been written succesfully.".format(args.midifile))
         elif mode == "midi2zoom":
