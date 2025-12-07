@@ -35,29 +35,40 @@ def parse_args(mode):
         default=0,
         help="MIDI track to parse (default: %(default)i)",
     )
+    parser.add_argument(
+        "--multiply",
+        type=int,
+        help="If set, ZOOM sequence is multiplied for the give times. (0 or less means filling the whole sequence)",
+    )
     return parser.parse_args()
 
 
 def main(mode):
     args = parse_args(mode)
 
+    # check files
+    midifile = args.midifile
+    zoomfile = args.zoomfile
+    if mode == "zoom2midi" and not os.path.isfile(args.midifile):
+        midifile = None
+    elif mode == "midi2zoom" and not os.path.isfile(args.zoomfile):
+        zoomfile = None
+
+    mid = ZoomMidiFile(
+        filename=midifile,
+        sequence_file=zoomfile,
+        note_offset=args.offset,
+        zoom_track_nr=args.midi_track,
+    )
+    if args.multiply is not None:
+        multiply_times = args.multiply if args.multiply > 0 else None
+        mid.seq.multiply_notes(times=multiply_times)
+
     try:
         if mode == "zoom2midi":
-            midifile = args.midifile if os.path.isfile(args.midifile) else None
-            mid = ZoomMidiFile(
-                filename=midifile,
-                sequence_file=args.zoomfile,
-                note_offset=args.offset,
-                zoom_track_nr=args.midi_track,
-            )
             mid.save(args.midifile)
             print("MIDI file {:s} has been written succesfully.".format(args.midifile))
         elif mode == "midi2zoom":
-            mid = ZoomMidiFile(
-                filename=args.midifile,
-                note_offset=args.offset,
-                zoom_track_nr=args.midi_track,
-            )
             mid.seq.write_file(args.zoomfile)
             print(
                 "ZOOM sequence file {:s} has been written succesfully.".format(
