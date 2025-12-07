@@ -194,6 +194,8 @@ class Sequence:
         for note in self.notes:
             if note.is_step:
                 continue
+            elif note.is_term:
+                break
 
             messages += [
                 {
